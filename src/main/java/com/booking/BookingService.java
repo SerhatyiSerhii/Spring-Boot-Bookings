@@ -10,33 +10,6 @@ import org.springframework.stereotype.Service;
 
 @Service
 public class BookingService {
-    // private final Map<Long, BookingRecord> bookingMap = Map.of(
-    // 1L, new BookingRecord(
-    // 1L,
-    // 101L,
-    // 41L,
-    // LocalDate.now(),
-    // LocalDate.now().plusDays(5),
-    // BookingStatus.APPROVED
-    // ),
-    // 2L, new BookingRecord(
-    // 2L,
-    // 102L,
-    // 42L,
-    // LocalDate.now(),
-    // LocalDate.now().plusDays(5),
-    // BookingStatus.APPROVED
-    // ),
-    // 3L, new BookingRecord(
-    // 3L,
-    // 103L,
-    // 43L,
-    // LocalDate.now(),
-    // LocalDate.now().plusDays(5),
-    // BookingStatus.APPROVED
-    // )
-    // );
-
     private final Map<Long, BookingRecord> bookingMap;
     private final AtomicLong idCounder;
 
@@ -78,6 +51,38 @@ public class BookingService {
         bookingMap.put(newBooking.id(), newBooking);
 
         return newBooking;
+    }
+
+    public BookingRecord updateBookingById(Long id, BookingRecord bookingToUpdate) {
+        if (!bookingMap.containsKey(id)) {
+            throw new NoSuchElementException("Not found such booking by id " + id);
+        }
+
+        var booking = bookingMap.get(id);
+
+        if (booking.status() != BookingStatus.PENDING) {
+            throw new IllegalStateException("Can not modify booking: status = " + booking.status());
+        }
+
+        var updatedBooking = new BookingRecord(
+                booking.id(),
+                bookingToUpdate.userId(),
+                bookingToUpdate.roomId(),
+                bookingToUpdate.starDate(),
+                bookingToUpdate.endDate(),
+                BookingStatus.PENDING);
+
+        bookingMap.put(booking.id(), updatedBooking);
+
+        return updatedBooking;
+    }
+
+    public void deleteBookingById(Long id) {
+        if (!bookingMap.containsKey(id)) {
+            throw new NoSuchElementException("Not found such booking by id " + id);
+        }
+
+        bookingMap.remove(id);
     }
 
 }
