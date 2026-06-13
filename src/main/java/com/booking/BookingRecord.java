@@ -6,7 +6,7 @@ public record BookingRecord(
         Long id,
         Long userId,
         Long roomId,
-        LocalDate starDate,
+        LocalDate startDate,
         LocalDate endDate,
         BookingStatus status
         ) {

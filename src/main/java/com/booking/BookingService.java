@@ -10,6 +10,7 @@ import org.springframework.stereotype.Service;
 
 @Service
 public class BookingService {
+
     private final Map<Long, BookingRecord> bookingMap;
     private final AtomicLong idCounder;
 
@@ -44,7 +45,7 @@ public class BookingService {
                 idCounder.incrementAndGet(),
                 bookingToCreate.userId(),
                 bookingToCreate.roomId(),
-                bookingToCreate.starDate(),
+                bookingToCreate.startDate(),
                 bookingToCreate.endDate(),
                 BookingStatus.PENDING);
 
@@ -68,7 +69,7 @@ public class BookingService {
                 booking.id(),
                 bookingToUpdate.userId(),
                 bookingToUpdate.roomId(),
-                bookingToUpdate.starDate(),
+                bookingToUpdate.startDate(),
                 bookingToUpdate.endDate(),
                 BookingStatus.PENDING);
 
@@ -83,6 +84,57 @@ public class BookingService {
         }
 
         bookingMap.remove(id);
+    }
+
+    public BookingRecord approveBooking(Long id) {
+        if (!bookingMap.containsKey(id)) {
+            throw new NoSuchElementException("Not found such booking by id " + id);
+        }
+
+        var bookingToApprove = bookingMap.get(id);
+
+        if (bookingToApprove.status() != BookingStatus.PENDING) {
+            throw new IllegalStateException("Can not approve booking.");
+        }
+
+        var isCoonflicted = isBookingConflict(bookingToApprove);
+
+        if (isCoonflicted) {
+            throw new IllegalStateException("Can not approve conflicted booking.");
+        }
+
+        var approvedBooking = new BookingRecord(
+                bookingToApprove.id(), bookingToApprove.userId(), bookingToApprove.roomId(),
+                bookingToApprove.startDate(), bookingToApprove.endDate(), BookingStatus.APPROVED);
+
+        bookingMap.put(bookingToApprove.id(), approvedBooking);
+
+        return approvedBooking;
+    }
+
+    public boolean isBookingConflict(BookingRecord booking) {
+
+        for (BookingRecord existingBooking : bookingMap.values()) {
+            if (existingBooking.id().equals(booking.id())) {
+                continue;
+            }
+
+            if (!booking.roomId().equals(existingBooking.roomId())) {
+                continue;
+            }
+
+            if (!existingBooking.status().equals(BookingStatus.APPROVED)) {
+                continue;
+            }
+
+            if (booking.startDate().isBefore(existingBooking.endDate())
+                    && existingBooking.startDate().isBefore(booking.endDate())) {
+
+                return true;
+            }
+        }
+
+        return false;
     }
 
 }

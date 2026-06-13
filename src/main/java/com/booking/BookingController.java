@@ -46,7 +46,7 @@ public class BookingController {
     }
 
     @PostMapping
-    public ResponseEntity<BookingRecord> creatBookingRecord(
+    public ResponseEntity<BookingRecord> createBookingRecord(
             @RequestBody BookingRecord bookingToCreate) {
         log.info("Created new booking");
 
@@ -61,7 +61,14 @@ public class BookingController {
 
         var updatedBooking = bookingService.updateBookingById(id, bookingToUpdate);
 
-        return ResponseEntity.ok(updatedBooking);
+        try {
+            return ResponseEntity.ok(updatedBooking);
+        } catch (NoSuchElementException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
+        } catch (IllegalStateException e) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        }
+
     }
 
     @DeleteMapping("/{id}")
@@ -74,6 +81,19 @@ public class BookingController {
             return ResponseEntity.ok().build();
         } catch (NoSuchElementException e) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
+        }
+
+    }
+
+    @PostMapping("/{id}/approve")
+    public ResponseEntity<BookingRecord> approveBooking(@PathVariable("id") Long id) {
+        log.info("Approved booking by id={}", id);
+        try {
+            return ResponseEntity.ok(bookingService.approveBooking(id));
+        } catch (NoSuchElementException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
+        } catch (IllegalStateException e) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         }
 
     }
