@@ -13,14 +13,26 @@ public class BookingService {
 
     private final Map<Long, BookingRecord> bookingMap;
     private final AtomicLong idCounder;
+    private final BookingRepository repository;
 
-    public BookingService() {
+    public BookingService(BookingRepository repository) {
+        this.repository = repository;
         bookingMap = new HashMap<>();
         idCounder = new AtomicLong();
     }
 
     public List<BookingRecord> getBookings() {
-        return bookingMap.values().stream().toList();
+        List<BookingEntity> allEntities = repository.findAll();
+        List<BookingRecord> bookingList = allEntities.stream()
+                .map(it -> new BookingRecord(it.getId(), it.getUserId(), it.getRoomId(), it.getStarDate(),
+                        it.getEndDate(), it.getStatus()))
+                .toList();
+
+        for (BookingRecord bookingListRecord: bookingList) {
+            bookingMap.put(bookingListRecord.id(), bookingListRecord);
+        }
+
+        return bookingList;
     }
 
     public BookingRecord getBookingById(Long id) {
