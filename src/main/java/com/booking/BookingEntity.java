@@ -41,6 +41,12 @@ public class BookingEntity {
             LocalDate startDate,
             LocalDate endDate,
             BookingStatus status) {
+        this.id = id;
+        this.userId = userId;
+        this.roomId = roomId;
+        this.startDate = startDate;
+        this.endDate = endDate;
+        this.status = status;
 
     }
 
@@ -72,11 +78,11 @@ public class BookingEntity {
         this.startDate = startDate;
     }
 
-    public LocalDate getStarDate() {
+    public LocalDate getStartDate() {
         return startDate;
     }
 
-    public void setEnddate(LocalDate endDate) {
+    public void setEndDate(LocalDate endDate) {
         this.endDate = endDate;
     }
 

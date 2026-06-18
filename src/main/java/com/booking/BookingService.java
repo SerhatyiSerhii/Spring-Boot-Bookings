@@ -8,12 +8,19 @@ import java.util.concurrent.atomic.AtomicLong;
 
 import org.springframework.stereotype.Service;
 
+import jakarta.persistence.EntityNotFoundException;
+
 @Service
 public class BookingService {
 
     private final Map<Long, BookingRecord> bookingMap;
     private final AtomicLong idCounder;
     private final BookingRepository repository;
+
+    private BookingRecord convertToBookingRecord(BookingEntity entity) {
+        return new BookingRecord(entity.getId(), entity.getUserId(), entity.getRoomId(), entity.getStartDate(),
+                entity.getEndDate(), entity.getStatus());
+    }
 
     public BookingService(BookingRepository repository) {
         this.repository = repository;
@@ -24,23 +31,17 @@ public class BookingService {
     public List<BookingRecord> getBookings() {
         List<BookingEntity> allEntities = repository.findAll();
         List<BookingRecord> bookingList = allEntities.stream()
-                .map(it -> new BookingRecord(it.getId(), it.getUserId(), it.getRoomId(), it.getStarDate(),
-                        it.getEndDate(), it.getStatus()))
+                .map(this::convertToBookingRecord)
                 .toList();
-
-        for (BookingRecord bookingListRecord: bookingList) {
-            bookingMap.put(bookingListRecord.id(), bookingListRecord);
-        }
 
         return bookingList;
     }
 
     public BookingRecord getBookingById(Long id) {
-        if (!bookingMap.containsKey(id)) {
-            throw new NoSuchElementException("Not found such booking by id " + id);
-        }
+        BookingEntity foundBookingEntity = repository.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException("Not found such booking by id " + id));
 
-        return bookingMap.get(id);
+        return convertToBookingRecord(foundBookingEntity);
     }
 
     public BookingRecord createBookingRecord(BookingRecord bookingToCreate) {
@@ -53,17 +54,17 @@ public class BookingService {
             throw new IllegalArgumentException("Status should be empty");
         }
 
-        var newBooking = new BookingRecord(
-                idCounder.incrementAndGet(),
+        var newBookingEntity = new BookingEntity(
+                null,
                 bookingToCreate.userId(),
                 bookingToCreate.roomId(),
                 bookingToCreate.startDate(),
                 bookingToCreate.endDate(),
                 BookingStatus.PENDING);
 
-        bookingMap.put(newBooking.id(), newBooking);
+        var savedBookingEntity = repository.save(newBookingEntity);
 
-        return newBooking;
+        return convertToBookingRecord(savedBookingEntity);
     }
 
     public BookingRecord updateBookingById(Long id, BookingRecord bookingToUpdate) {

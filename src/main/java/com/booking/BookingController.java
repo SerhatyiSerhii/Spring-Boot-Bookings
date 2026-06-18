@@ -16,6 +16,8 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import jakarta.persistence.EntityNotFoundException;
+
 @RestController
 @RequestMapping("/bookings")
 public class BookingController {
@@ -39,7 +41,7 @@ public class BookingController {
 
         try {
             return ResponseEntity.status(HttpStatus.OK).body(bookingService.getBookingById(id));
-        } catch (NoSuchElementException e) {
+        } catch (EntityNotFoundException e) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
         }
 
