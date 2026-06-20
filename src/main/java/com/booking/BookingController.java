@@ -1,7 +1,6 @@
 package com.booking;
 
 import java.util.List;
-import java.util.NoSuchElementException;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -65,7 +64,7 @@ public class BookingController {
 
         try {
             return ResponseEntity.ok(updatedBooking);
-        } catch (NoSuchElementException e) {
+        } catch (EntityNotFoundException e) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
         } catch (IllegalStateException e) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
@@ -81,7 +80,7 @@ public class BookingController {
             bookingService.deleteBookingById(id);
 
             return ResponseEntity.ok().build();
-        } catch (NoSuchElementException e) {
+        } catch (EntityNotFoundException e) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
         }
 
@@ -92,7 +91,7 @@ public class BookingController {
         log.info("Approved booking by id={}", id);
         try {
             return ResponseEntity.ok(bookingService.approveBooking(id));
-        } catch (NoSuchElementException e) {
+        } catch (EntityNotFoundException e) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
         } catch (IllegalStateException e) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build();

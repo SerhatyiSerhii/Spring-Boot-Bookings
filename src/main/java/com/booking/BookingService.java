@@ -1,10 +1,6 @@
 package com.booking;
 
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
-import java.util.NoSuchElementException;
-import java.util.concurrent.atomic.AtomicLong;
 
 import org.springframework.stereotype.Service;
 
@@ -13,8 +9,6 @@ import jakarta.persistence.EntityNotFoundException;
 @Service
 public class BookingService {
 
-    private final Map<Long, BookingRecord> bookingMap;
-    private final AtomicLong idCounder;
     private final BookingRepository repository;
 
     private BookingRecord convertToBookingRecord(BookingEntity entity) {
@@ -24,8 +18,6 @@ public class BookingService {
 
     public BookingService(BookingRepository repository) {
         this.repository = repository;
-        bookingMap = new HashMap<>();
-        idCounder = new AtomicLong();
     }
 
     public List<BookingRecord> getBookings() {
@@ -68,80 +60,77 @@ public class BookingService {
     }
 
     public BookingRecord updateBookingById(Long id, BookingRecord bookingToUpdate) {
-        if (!bookingMap.containsKey(id)) {
-            throw new NoSuchElementException("Not found such booking by id " + id);
+        BookingEntity foundBookingEntity = repository.findById(id).orElseThrow(()
+                -> new EntityNotFoundException("Not found such booking by id " + id));
+
+        BookingStatus foundEntityStatus = foundBookingEntity.getStatus();
+
+        if (foundEntityStatus != BookingStatus.PENDING) {
+            throw new IllegalStateException("Can not modify booking: status = " + foundEntityStatus);
         }
 
-        var booking = bookingMap.get(id);
-
-        if (booking.status() != BookingStatus.PENDING) {
-            throw new IllegalStateException("Can not modify booking: status = " + booking.status());
-        }
-
-        var updatedBooking = new BookingRecord(
-                booking.id(),
+        var bookingEntityToUpdate = new BookingEntity(
+                foundBookingEntity.getId(),
                 bookingToUpdate.userId(),
                 bookingToUpdate.roomId(),
                 bookingToUpdate.startDate(),
                 bookingToUpdate.endDate(),
                 BookingStatus.PENDING);
 
-        bookingMap.put(booking.id(), updatedBooking);
+        repository.save(bookingEntityToUpdate);
 
-        return updatedBooking;
+        return convertToBookingRecord(bookingEntityToUpdate);
     }
 
     public void deleteBookingById(Long id) {
-        if (!bookingMap.containsKey(id)) {
-            throw new NoSuchElementException("Not found such booking by id " + id);
-        }
+        BookingEntity foundBookingEntity = repository.findById(id).orElseThrow(()
+                -> new EntityNotFoundException("Not found such booking by id " + id));
 
-        bookingMap.remove(id);
+        repository.delete(foundBookingEntity);
     }
 
     public BookingRecord approveBooking(Long id) {
-        if (!bookingMap.containsKey(id)) {
-            throw new NoSuchElementException("Not found such booking by id " + id);
-        }
+        BookingEntity foundBookingEntity = repository.findById(id).orElseThrow(()
+                -> new EntityNotFoundException("Not found such booking by id " + id));
 
-        var bookingToApprove = bookingMap.get(id);
+        BookingStatus foundEntityStatus = foundBookingEntity.getStatus();
 
-        if (bookingToApprove.status() != BookingStatus.PENDING) {
+        if (foundEntityStatus != BookingStatus.PENDING) {
             throw new IllegalStateException("Can not approve booking.");
         }
 
-        var isCoonflicted = isBookingConflict(bookingToApprove);
+        var isCoonflicted = isBookingConflict(foundBookingEntity);
 
         if (isCoonflicted) {
             throw new IllegalStateException("Can not approve conflicted booking.");
         }
 
-        var approvedBooking = new BookingRecord(
-                bookingToApprove.id(), bookingToApprove.userId(), bookingToApprove.roomId(),
-                bookingToApprove.startDate(), bookingToApprove.endDate(), BookingStatus.APPROVED);
+        var approvedBookingEntity = new BookingEntity(
+                foundBookingEntity.getId(), foundBookingEntity.getUserId(), foundBookingEntity.getRoomId(),
+                foundBookingEntity.getStartDate(), foundBookingEntity.getEndDate(), BookingStatus.APPROVED);
 
-        bookingMap.put(bookingToApprove.id(), approvedBooking);
+        repository.save(approvedBookingEntity);
 
-        return approvedBooking;
+        return convertToBookingRecord(approvedBookingEntity);
     }
 
-    public boolean isBookingConflict(BookingRecord booking) {
+    public boolean isBookingConflict(BookingEntity booking) {
 
-        for (BookingRecord existingBooking : bookingMap.values()) {
-            if (existingBooking.id().equals(booking.id())) {
+        for (BookingEntity existingBookingEntity : repository.findAll()) {
+            if (existingBookingEntity.getId().equals(booking.getId())) {
                 continue;
             }
 
-            if (!booking.roomId().equals(existingBooking.roomId())) {
+            if (!booking.getRoomId().equals(existingBookingEntity.getRoomId())) {
                 continue;
             }
 
-            if (!existingBooking.status().equals(BookingStatus.APPROVED)) {
+            if (!existingBookingEntity.getStatus().equals(BookingStatus.APPROVED)) {
                 continue;
             }
 
-            if (booking.startDate().isBefore(existingBooking.endDate())
-                    && existingBooking.startDate().isBefore(booking.endDate())) {
+            if (booking.getStartDate().isBefore(existingBookingEntity.getEndDate())
+                    && existingBookingEntity.getStartDate().isBefore(booking.getEndDate())) {
 
                 return true;
             }
