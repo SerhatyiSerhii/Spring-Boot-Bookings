@@ -72,12 +72,12 @@ public class BookingController {
 
     }
 
-    @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteBookingById(@PathVariable("id") Long id) {
+    @DeleteMapping("/{id}/cancel")
+    public ResponseEntity<Void> cancelBookingById(@PathVariable("id") Long id) {
         log.info("Deleted booking by id={}", id);
 
         try {
-            bookingService.deleteBookingById(id);
+            bookingService.cancelBookingById(id);
 
             return ResponseEntity.ok().build();
         } catch (EntityNotFoundException e) {

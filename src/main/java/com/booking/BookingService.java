@@ -2,12 +2,17 @@ package com.booking;
 
 import java.util.List;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import jakarta.persistence.EntityNotFoundException;
 
 @Service
 public class BookingService {
+
+    private static final Logger log = LoggerFactory.getLogger(BookingService.class);
 
     private final BookingRepository repository;
 
@@ -60,8 +65,8 @@ public class BookingService {
     }
 
     public BookingRecord updateBookingById(Long id, BookingRecord bookingToUpdate) {
-        BookingEntity foundBookingEntity = repository.findById(id).orElseThrow(()
-                -> new EntityNotFoundException("Not found such booking by id " + id));
+        BookingEntity foundBookingEntity = repository.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException("Not found such booking by id " + id));
 
         BookingStatus foundEntityStatus = foundBookingEntity.getStatus();
 
@@ -82,16 +87,20 @@ public class BookingService {
         return convertToBookingRecord(bookingEntityToUpdate);
     }
 
-    public void deleteBookingById(Long id) {
-        BookingEntity foundBookingEntity = repository.findById(id).orElseThrow(()
-                -> new EntityNotFoundException("Not found such booking by id " + id));
+    @Transactional
+    public void cancelBookingById(Long id) {
+        if (!repository.existsById(id)) {
+            throw new EntityNotFoundException("Not found such booking by id " + id);
+        }
 
-        repository.delete(foundBookingEntity);
+        repository.setStatus(id, BookingStatus.CANCELLED);
+
+        log.info("Successfully cancelled booking id={}", id);
     }
 
     public BookingRecord approveBooking(Long id) {
-        BookingEntity foundBookingEntity = repository.findById(id).orElseThrow(()
-                -> new EntityNotFoundException("Not found such booking by id " + id));
+        BookingEntity foundBookingEntity = repository.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException("Not found such booking by id " + id));
 
         BookingStatus foundEntityStatus = foundBookingEntity.getStatus();
 
