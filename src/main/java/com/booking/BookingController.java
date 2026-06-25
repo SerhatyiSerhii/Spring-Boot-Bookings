@@ -15,8 +15,6 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import jakarta.persistence.EntityNotFoundException;
-
 @RestController
 @RequestMapping("/bookings")
 public class BookingController {
@@ -38,12 +36,7 @@ public class BookingController {
     public ResponseEntity<BookingRecord> getBookingById(@PathVariable("id") Long id) {
         log.info("Get booking for id " + id);
 
-        try {
-            return ResponseEntity.status(HttpStatus.OK).body(bookingService.getBookingById(id));
-        } catch (EntityNotFoundException e) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
-        }
-
+        return ResponseEntity.status(HttpStatus.OK).body(bookingService.getBookingById(id));
     }
 
     @PostMapping
@@ -62,40 +55,22 @@ public class BookingController {
 
         var updatedBooking = bookingService.updateBookingById(id, bookingToUpdate);
 
-        try {
-            return ResponseEntity.ok(updatedBooking);
-        } catch (EntityNotFoundException e) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
-        } catch (IllegalStateException e) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
-        }
-
+        return ResponseEntity.ok(updatedBooking);
     }
 
     @DeleteMapping("/{id}/cancel")
     public ResponseEntity<Void> cancelBookingById(@PathVariable("id") Long id) {
         log.info("Deleted booking by id={}", id);
 
-        try {
-            bookingService.cancelBookingById(id);
+        bookingService.cancelBookingById(id);
 
-            return ResponseEntity.ok().build();
-        } catch (EntityNotFoundException e) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
-        }
-
+        return ResponseEntity.ok().build();
     }
 
     @PostMapping("/{id}/approve")
     public ResponseEntity<BookingRecord> approveBooking(@PathVariable("id") Long id) {
         log.info("Approved booking by id={}", id);
-        try {
-            return ResponseEntity.ok(bookingService.approveBooking(id));
-        } catch (EntityNotFoundException e) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
-        } catch (IllegalStateException e) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
-        }
 
+        return ResponseEntity.ok(bookingService.approveBooking(id));
     }
 }
