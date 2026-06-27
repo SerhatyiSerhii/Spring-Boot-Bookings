@@ -1,5 +1,7 @@
 package com.booking;
 
+import java.time.LocalDateTime;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
@@ -15,27 +17,34 @@ public class GlobalExceptionHandler {
     private static final Logger log = LoggerFactory.getLogger(GlobalExceptionHandler.class);
 
     @ExceptionHandler(Exception.class)
-    public ResponseEntity<String> handleGenericException(Exception e) {
+    public ResponseEntity<GlobalExceptionMessageRecordDto> handleGenericException(Exception e) {
         log.error("Handle Exception", e);
 
-        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(e.getMessage());
+        var errorMessage = new GlobalExceptionMessageRecordDto("Internal server error", e.getMessage(),
+                LocalDateTime.now());
+
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorMessage);
     }
 
     @ExceptionHandler(EntityNotFoundException.class)
-    public ResponseEntity<String> handleEntityNotFoundException(EntityNotFoundException e) {
+    public ResponseEntity<GlobalExceptionMessageRecordDto> handleEntityNotFoundException(EntityNotFoundException e) {
         log.error("Handle EntityNotFoundException", e);
 
-        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
+        var errorMessage = new GlobalExceptionMessageRecordDto("Entity not found", e.getMessage(), LocalDateTime.now());
+
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(errorMessage);
     }
 
     @ExceptionHandler({
             IllegalArgumentException.class,
             IllegalStateException.class
     })
-    public ResponseEntity<String> handleBadReques(RuntimeException e) {
+    public ResponseEntity<GlobalExceptionMessageRecordDto> handleBadReques(RuntimeException e) {
         log.error("Handle BadRequest", e);
 
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
+        var errorMessage = new GlobalExceptionMessageRecordDto("Bad request", e.getMessage(), LocalDateTime.now());
+
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorMessage);
     }
 
 }
