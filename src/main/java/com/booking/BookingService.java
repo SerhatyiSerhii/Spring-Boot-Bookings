@@ -43,12 +43,12 @@ public class BookingService {
 
     public BookingRecord createBookingRecord(BookingRecord bookingToCreate) {
 
-        if (bookingToCreate.id() != null) {
-            throw new IllegalArgumentException("Id should be empty");
-        }
-
         if (bookingToCreate.status() != null) {
             throw new IllegalArgumentException("Status should be empty");
+        }
+
+        if (!bookingToCreate.endDate().isAfter(bookingToCreate.startDate())) {
+            throw new IllegalArgumentException("End date can't be before start date");
         }
 
         var newBookingEntity = new BookingEntity(

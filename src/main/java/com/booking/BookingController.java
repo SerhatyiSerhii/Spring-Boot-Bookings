@@ -15,6 +15,8 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import jakarta.validation.Valid;
+
 @RestController
 @RequestMapping("/bookings")
 public class BookingController {
@@ -41,7 +43,7 @@ public class BookingController {
 
     @PostMapping
     public ResponseEntity<BookingRecord> createBookingRecord(
-            @RequestBody BookingRecord bookingToCreate) {
+            @RequestBody @Valid BookingRecord bookingToCreate) {
         log.info("Created new booking");
 
         return ResponseEntity.status(HttpStatus.CREATED).header("Custom-header", "123")
@@ -50,7 +52,7 @@ public class BookingController {
 
     @PutMapping("/{id}")
     public ResponseEntity<BookingRecord> updateBookingById(@PathVariable("id") Long id,
-            @RequestBody BookingRecord bookingToUpdate) {
+            @RequestBody @Valid BookingRecord bookingToUpdate) {
         log.info("Updated booking by id={}, bookingToUpdate={}", id, bookingToUpdate);
 
         var updatedBooking = bookingService.updateBookingById(id, bookingToUpdate);
