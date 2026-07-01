@@ -74,6 +74,10 @@ public class BookingService {
             throw new IllegalStateException("Can not modify booking: status = " + foundEntityStatus);
         }
 
+        if (!bookingToUpdate.endDate().isAfter(bookingToUpdate.startDate())) {
+            throw new IllegalArgumentException("End date can't be before start date");
+        }
+
         var bookingEntityToUpdate = new BookingEntity(
                 foundBookingEntity.getId(),
                 bookingToUpdate.userId(),
@@ -89,8 +93,15 @@ public class BookingService {
 
     @Transactional
     public void cancelBookingById(Long id) {
-        if (!repository.existsById(id)) {
-            throw new EntityNotFoundException("Not found such booking by id " + id);
+        BookingEntity foundBookingEntity = repository.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException("Not found such booking by id " + id));
+
+        if(foundBookingEntity.getStatus().equals(BookingStatus.APPROVED)) {
+            throw new IllegalArgumentException("Can not cancel approved booking. Please contact a manager");
+        }
+
+        if(foundBookingEntity.getStatus().equals(BookingStatus.CANCELLED)) {
+            throw new IllegalArgumentException("Booking's already been canceled");
         }
 
         repository.setStatus(id, BookingStatus.CANCELLED);
