@@ -1,5 +1,6 @@
-package com.booking;
+package com.booking.bookings;
 
+import java.time.LocalDate;
 import java.util.List;
 
 import org.slf4j.Logger;
@@ -96,11 +97,11 @@ public class BookingService {
         BookingEntity foundBookingEntity = repository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Not found such booking by id " + id));
 
-        if(foundBookingEntity.getStatus().equals(BookingStatus.APPROVED)) {
+        if (foundBookingEntity.getStatus().equals(BookingStatus.APPROVED)) {
             throw new IllegalArgumentException("Can not cancel approved booking. Please contact a manager");
         }
 
-        if(foundBookingEntity.getStatus().equals(BookingStatus.CANCELLED)) {
+        if (foundBookingEntity.getStatus().equals(BookingStatus.CANCELLED)) {
             throw new IllegalArgumentException("Booking's already been canceled");
         }
 
@@ -119,7 +120,8 @@ public class BookingService {
             throw new IllegalStateException("Can not approve booking.");
         }
 
-        var isCoonflicted = isBookingConflict(foundBookingEntity);
+        var isCoonflicted = isBookingConflict(foundBookingEntity.getRoomId(), foundBookingEntity.getStartDate(),
+                foundBookingEntity.getEndDate());
 
         if (isCoonflicted) {
             throw new IllegalStateException("Can not approve conflicted booking.");
@@ -134,29 +136,21 @@ public class BookingService {
         return convertToBookingRecord(approvedBookingEntity);
     }
 
-    public boolean isBookingConflict(BookingEntity booking) {
+    public boolean isBookingConflict(
+            Long roomId,
+            LocalDate startDate,
+            LocalDate endDate) {
 
-        for (BookingEntity existingBookingEntity : repository.findAll()) {
-            if (existingBookingEntity.getId().equals(booking.getId())) {
-                continue;
-            }
+        List<Long> conflictingIds = repository.findConflictBookingsIds(roomId, startDate, endDate,
+                BookingStatus.APPROVED);
 
-            if (!booking.getRoomId().equals(existingBookingEntity.getRoomId())) {
-                continue;
-            }
-
-            if (!existingBookingEntity.getStatus().equals(BookingStatus.APPROVED)) {
-                continue;
-            }
-
-            if (booking.getStartDate().isBefore(existingBookingEntity.getEndDate())
-                    && existingBookingEntity.getStartDate().isBefore(booking.getEndDate())) {
-
-                return true;
-            }
+        if (conflictingIds.isEmpty()) {
+            return false;
         }
 
-        return false;
+        log.info("Conflict with ids={}", conflictingIds);
+
+        return true;
     }
 
 }

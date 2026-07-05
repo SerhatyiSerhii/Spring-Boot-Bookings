@@ -1,4 +1,4 @@
-package com.booking;
+package com.booking.bookings;
 
 import java.time.LocalDate;
 
