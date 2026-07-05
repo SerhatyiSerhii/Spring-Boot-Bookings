@@ -16,20 +16,17 @@ public class BookingService {
     private static final Logger log = LoggerFactory.getLogger(BookingService.class);
 
     private final BookingRepository repository;
+    private final BookingMapper mapper;
 
-    private BookingRecord convertToBookingRecord(BookingEntity entity) {
-        return new BookingRecord(entity.getId(), entity.getUserId(), entity.getRoomId(), entity.getStartDate(),
-                entity.getEndDate(), entity.getStatus());
-    }
-
-    public BookingService(BookingRepository repository) {
+    public BookingService(BookingRepository repository, BookingMapper mapper) {
         this.repository = repository;
+        this.mapper = mapper;
     }
 
     public List<BookingRecord> getBookings() {
         List<BookingEntity> allEntities = repository.findAll();
         List<BookingRecord> bookingList = allEntities.stream()
-                .map(this::convertToBookingRecord)
+                .map(mapper::convertToBookingRecord)
                 .toList();
 
         return bookingList;
@@ -39,7 +36,7 @@ public class BookingService {
         BookingEntity foundBookingEntity = repository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Not found such booking by id " + id));
 
-        return convertToBookingRecord(foundBookingEntity);
+        return mapper.convertToBookingRecord(foundBookingEntity);
     }
 
     public BookingRecord createBookingRecord(BookingRecord bookingToCreate) {
@@ -62,7 +59,7 @@ public class BookingService {
 
         var savedBookingEntity = repository.save(newBookingEntity);
 
-        return convertToBookingRecord(savedBookingEntity);
+        return mapper.convertToBookingRecord(savedBookingEntity);
     }
 
     public BookingRecord updateBookingById(Long id, BookingRecord bookingToUpdate) {
@@ -89,7 +86,7 @@ public class BookingService {
 
         repository.save(bookingEntityToUpdate);
 
-        return convertToBookingRecord(bookingEntityToUpdate);
+        return mapper.convertToBookingRecord(bookingEntityToUpdate);
     }
 
     @Transactional
@@ -133,7 +130,7 @@ public class BookingService {
 
         repository.save(approvedBookingEntity);
 
-        return convertToBookingRecord(approvedBookingEntity);
+        return mapper.convertToBookingRecord(approvedBookingEntity);
     }
 
     public boolean isBookingConflict(
