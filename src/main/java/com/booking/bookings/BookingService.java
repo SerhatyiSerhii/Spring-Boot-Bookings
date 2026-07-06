@@ -23,7 +23,7 @@ public class BookingService {
         this.mapper = mapper;
     }
 
-    public List<BookingRecord> getBookings() {
+    public List<BookingRecord> searchAllByFilter(BookingSearchFilter filter) {
         List<BookingEntity> allEntities = repository.findAll();
         List<BookingRecord> bookingList = allEntities.stream()
                 .map(mapper::convertToBookingRecord)
@@ -49,13 +49,9 @@ public class BookingService {
             throw new IllegalArgumentException("End date can't be before start date");
         }
 
-        var newBookingEntity = new BookingEntity(
-                null,
-                bookingToCreate.userId(),
-                bookingToCreate.roomId(),
-                bookingToCreate.startDate(),
-                bookingToCreate.endDate(),
-                BookingStatus.PENDING);
+        var newBookingEntity = mapper.convertToBookingEntity(bookingToCreate);
+        newBookingEntity.setId(null);
+        newBookingEntity.setStatus(BookingStatus.PENDING);
 
         var savedBookingEntity = repository.save(newBookingEntity);
 
@@ -76,13 +72,9 @@ public class BookingService {
             throw new IllegalArgumentException("End date can't be before start date");
         }
 
-        var bookingEntityToUpdate = new BookingEntity(
-                foundBookingEntity.getId(),
-                bookingToUpdate.userId(),
-                bookingToUpdate.roomId(),
-                bookingToUpdate.startDate(),
-                bookingToUpdate.endDate(),
-                BookingStatus.PENDING);
+        var bookingEntityToUpdate = mapper.convertToBookingEntity(bookingToUpdate);
+        bookingEntityToUpdate.setId(foundBookingEntity.getId());
+        bookingEntityToUpdate.setStatus(BookingStatus.PENDING);
 
         repository.save(bookingEntityToUpdate);
 

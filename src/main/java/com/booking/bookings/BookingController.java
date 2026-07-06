@@ -13,6 +13,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import jakarta.validation.Valid;
@@ -29,9 +30,14 @@ public class BookingController {
     }
 
     @GetMapping
-    public ResponseEntity<List<BookingRecord>> getBookings() {
+    public ResponseEntity<List<BookingRecord>> getBookings(
+            @RequestParam("roomId") Long roomId,
+            @RequestParam("userId") Long userId,
+            @RequestParam("pageSize") Integer pageSize,
+            @RequestParam("pageNumber") Integer pageNumber) {
         log.info("Get all bookings");
-        return ResponseEntity.ok(bookingService.getBookings());
+        var filter = new BookingSearchFilter(roomId, userId, pageSize, pageNumber);
+        return ResponseEntity.ok(bookingService.searchAllByFilter(filter));
     }
 
     @GetMapping("/{id}")
