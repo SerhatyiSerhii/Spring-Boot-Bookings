@@ -5,6 +5,8 @@ import java.util.List;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -17,6 +19,10 @@ public class BookingService {
 
     private final BookingRepository repository;
     private final BookingMapper mapper;
+    @Value("${app.defaul.page.size}")
+    private int defaultPageSize;
+    @Value("${app.defaul.page.number}")
+    private int defaultPageNumber;
 
     public BookingService(BookingRepository repository, BookingMapper mapper) {
         this.repository = repository;
@@ -24,7 +30,16 @@ public class BookingService {
     }
 
     public List<BookingRecord> searchAllByFilter(BookingSearchFilter filter) {
-        List<BookingEntity> allEntities = repository.findAll();
+        var filteredPageSize = filter.pageSize();
+        var filteredPageNumber = filter.pageNumber();
+
+        int pageSize = filteredPageSize != null ? filteredPageSize : defaultPageSize;
+        int pageNumber = filteredPageNumber != null ? filteredPageNumber : defaultPageNumber;
+
+        var pageable = Pageable.ofSize(pageSize).withPage(pageNumber);
+
+        List<BookingEntity> allEntities = repository.searchAllByFilter(filter.roomId(), filter.userId(), pageable);
+
         List<BookingRecord> bookingList = allEntities.stream()
                 .map(mapper::convertToBookingRecord)
                 .toList();
