@@ -31,10 +31,10 @@ public class BookingController {
 
     @GetMapping
     public ResponseEntity<List<BookingRecord>> getBookings(
-            @RequestParam("roomId") Long roomId,
-            @RequestParam("userId") Long userId,
-            @RequestParam("pageSize") Integer pageSize,
-            @RequestParam("pageNumber") Integer pageNumber) {
+            @RequestParam(name = "roomId", required = false) Long roomId,
+            @RequestParam(name = "userId", required = false) Long userId,
+            @RequestParam(name = "pageSize", required = false) Integer pageSize,
+            @RequestParam(name = "pageNumber", required = false) Integer pageNumber) {
         log.info("Get all bookings");
         var filter = new BookingSearchFilter(roomId, userId, pageSize, pageNumber);
         return ResponseEntity.ok(bookingService.searchAllByFilter(filter));

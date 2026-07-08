@@ -34,8 +34,8 @@ public interface BookingRepository extends JpaRepository<BookingEntity, Long> {
 
     @Query("""
         SELECT b from BookingEntity b
-        where b.roomId = :roomId
-        and b.userId = :userId
+        where (:roomId is null or b.roomId = :roomId)
+        and (:userId is null or b.userId = :userId)
         """)
     List<BookingEntity> searchAllByFilter(
             @Param("roomId") Long roomId,
