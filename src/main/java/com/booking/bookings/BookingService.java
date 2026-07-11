@@ -1,6 +1,5 @@
 package com.booking.bookings;
 
-import java.time.LocalDate;
 import java.util.List;
 
 import org.slf4j.Logger;
@@ -9,6 +8,8 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import com.booking.bookings.availability.BookingAvailabilityService;
 
 import jakarta.persistence.EntityNotFoundException;
 
@@ -19,14 +20,16 @@ public class BookingService {
 
     private final BookingRepository repository;
     private final BookingMapper mapper;
+    private final BookingAvailabilityService availabilityService;
     @Value("${app.defaul.page.size}")
     private int defaultPageSize;
     @Value("${app.defaul.page.number}")
     private int defaultPageNumber;
 
-    public BookingService(BookingRepository repository, BookingMapper mapper) {
+    public BookingService(BookingRepository repository, BookingMapper mapper, BookingAvailabilityService availabilityService) {
         this.repository = repository;
         this.mapper = mapper;
+        this.availabilityService = availabilityService;
     }
 
     public List<BookingRecord> searchAllByFilter(BookingSearchFilter filter) {
@@ -124,10 +127,10 @@ public class BookingService {
             throw new IllegalStateException("Can not approve booking.");
         }
 
-        var isCoonflicted = isBookingConflict(foundBookingEntity.getRoomId(), foundBookingEntity.getStartDate(),
+        var isAvailAbleToApprove = availabilityService.isBookingAvailable(foundBookingEntity.getRoomId(), foundBookingEntity.getStartDate(),
                 foundBookingEntity.getEndDate());
 
-        if (isCoonflicted) {
+        if (!isAvailAbleToApprove) {
             throw new IllegalStateException("Can not approve conflicted booking.");
         }
 
@@ -139,22 +142,4 @@ public class BookingService {
 
         return mapper.convertToBookingRecord(approvedBookingEntity);
     }
-
-    public boolean isBookingConflict(
-            Long roomId,
-            LocalDate startDate,
-            LocalDate endDate) {
-
-        List<Long> conflictingIds = repository.findConflictBookingsIds(roomId, startDate, endDate,
-                BookingStatus.APPROVED);
-
-        if (conflictingIds.isEmpty()) {
-            return false;
-        }
-
-        log.info("Conflict with ids={}", conflictingIds);
-
-        return true;
-    }
-
 }
